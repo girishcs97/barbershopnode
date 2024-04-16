@@ -10,7 +10,7 @@ const userRoutes = require("./route/user");
 const adminRoutes = require("./route/admin");
 
 mongoose
-  .connect(process.env.DATABASE, {
+  .connect('mongodb+srv://girishcs097:SgaViddrmuZYpVEW@cluster0.zbalzsg.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
