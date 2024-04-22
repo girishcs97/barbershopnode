@@ -60,13 +60,16 @@ exports.sendMail = async (req, res, next) => {
     }
   });
   const customerName = req.body.name || "Customer";
-  const appointmentDate = moment(req.body.startTime).format('MMMM Do YYYY, h:mm a');
+  const dateee = new Date(req.body.startTime);
+  const appointmentDate = `${dateee.getFullYear()}-${dateee.getMonth()+1}-${dateee.getDate()}`;
+
   const selectedService = req.body.service || "Requested Service";
   const assignedBarber = req.body.barber || "Requested Barber";
 
+  const mailList = [req.body.email,'girishcs097@gmail.com'];
   const mailOptions = {
-    to: req.body.email,
-    subject: `Welcome To Barber House, Appointment Confirmation: ${customerName} - ${appointmentDate}`,
+    to: mailList,
+    subject: `Welcome To Barber House, Appointment Confirmation: ${customerName} - ${appointmentDate} at ${req.body.time}`,
     html: `
     <!DOCTYPE html>
     <html lang="en">
@@ -81,12 +84,12 @@ exports.sendMail = async (req, res, next) => {
     
         <p>Dear ${customerName},</p>
     
-        <p>Your appointment at Sharp Cuts Barber Shop has been successfully booked. Below are the details:</p>
+        <p>Your appointment at Barber House has been successfully booked. Below are the details:</p>
     
         <table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">
             <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;">Date and Time:</td>
-                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${appointmentDate}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">${appointmentDate}, ${req.body.time}</td>
             </tr>
             <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;">Service:</td>
@@ -156,12 +159,12 @@ exports.declineMail = async (req, res, next) => {
     }
   });
   const customerName = req.body.name || "Customer";
-  const appointmentDate = moment(req.body.startTime).format('MMMM Do YYYY, h:mm a');
+  const appointmentDate = `${dateee.getFullYear()}-${dateee.getMonth()+1}-${dateee.getDate()}`;
   const selectedService = req.body.service || "Requested Service";
 
   const mailOptions = {
     to: req.body.email,
-    subject: `Welcome To Barber House, Appointment Declined: ${customerName} - ${appointmentDate}`,
+    subject: `Welcome To Barber House, Appointment Declined: ${customerName} - ${appointmentDate} at ${req.body.time}`,
     html: `
     <!DOCTYPE html>
     <html lang="en">
@@ -176,7 +179,7 @@ exports.declineMail = async (req, res, next) => {
     
         <p>Dear ${customerName},</p>
     
-        <p>We regret to inform you that your appointment for a ${selectedService} on ${appointmentDate} has been declined.</p>
+        <p>We regret to inform you that your appointment for a ${selectedService} on ${appointmentDate}  at ${req.body.time} has been declined.</p>
     
         <p>This decision was due to unforeseen circumstances or unavailability. We sincerely apologize for any inconvenience caused.</p>
     
@@ -215,3 +218,49 @@ exports.declineMail = async (req, res, next) => {
     }
   })
 }
+
+exports.fetchBookedTimeSlots = async (req, res, next) => {
+  console.log("req",req)
+  try {
+    const { date } = req.query; // Assuming the date is passed in the format 'YYYY-MM-DD'
+
+    // Construct the start and end date for the selected day
+    const startDate = new Date(date);
+    const endDate = new Date(date);
+    endDate.setDate(endDate.getDate() + 1); // Move to the next day
+
+    // Find appointments for the selected day
+    const appointments = await User.find({
+      date: { $gte: startDate, $lt: endDate }, // Filter by date range
+      time: { $exists: true, $ne: null } // Ensure 'time' field exists and is not null
+    }).select('time'); // Select only the 'time' field
+    console.log(appointments);
+    const formattedAppointments = appointments.map(appointment =>appointment.time);
+
+    res.status(200).json({
+      bookedTimeSlots: formattedAppointments,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({
+      error: err.message,
+    });
+  }
+};
+// end added manually
+
+exports.submitform = async (req, res, next) => {
+  try {
+    const user = await User.create({ ...req.body });
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
