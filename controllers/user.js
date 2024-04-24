@@ -159,6 +159,7 @@ exports.declineMail = async (req, res, next) => {
     }
   });
   const customerName = req.body.name || "Customer";
+  const dateee = new Date(req.body.startTime);
   const appointmentDate = `${dateee.getFullYear()}-${dateee.getMonth()+1}-${dateee.getDate()}`;
   const selectedService = req.body.service || "Requested Service";
 
